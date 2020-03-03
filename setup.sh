@@ -1,4 +1,5 @@
 #! /bin/bash
+CM_URL=""
 echo "-- Configure and optimize the OS"
 echo never > /sys/kernel/mm/transparent_hugepage/enabled
 echo never > /sys/kernel/mm/transparent_hugepage/defrag
@@ -66,7 +67,7 @@ sed -i 's/SELINUX=.*/SELINUX=disabled/' /etc/selinux/config
 echo "-- Install CM and MariaDB"
 
 ## CM 7
-wget https://archive.cloudera.com/cm7/7.0/redhat7/yum/cloudera-manager-trial.repo -P /etc/yum.repos.d/
+#wget https://archive.cloudera.com/cm7/7.0/redhat7/yum/cloudera-manager-trial.repo -P /etc/yum.repos.d/
 
 ## MariaDB 10.1
 cat - >/etc/yum.repos.d/MariaDB.repo <<EOF
@@ -122,30 +123,30 @@ echo "-- Prepare CM database 'scm'"
 
 
 ## PostgreSQL see: https://www.postgresql.org/download/linux/redhat/
-yum install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm
-yum install -y postgresql96
-yum install -y postgresql96-server
-pip install psycopg2==2.7.5 --ignore-installed
+#yum install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+#yum install -y postgresql96
+#yum install -y postgresql96-server
+#pip install psycopg2==2.7.5 --ignore-installed
 
-echo 'LC_ALL="en_US.UTF-8"' >> /etc/locale.conf
-/usr/pgsql-9.6/bin/postgresql96-setup initdb
+#echo 'LC_ALL="en_US.UTF-8"' >> /etc/locale.conf
+#/usr/pgsql-9.6/bin/postgresql96-setup initdb
 
-cat conf/pg_hba.conf > /var/lib/pgsql/9.6/data/pg_hba.conf
-cat conf/postgresql.conf > /var/lib/pgsql/9.6/data/postgresql.conf
+#cat conf/pg_hba.conf > /var/lib/pgsql/9.6/data/pg_hba.conf
+#cat conf/postgresql.conf > /var/lib/pgsql/9.6/data/postgresql.conf
 
-echo "--Enable and start pgsql"
-systemctl enable postgresql-9.6
-systemctl start postgresql-9.6
+#echo "--Enable and start pgsql"
+#systemctl enable postgresql-9.6
+#systemctl start postgresql-9.6
 
-echo "-- Create DBs required by CM"
-sudo -u postgres psql <<EOF 
-CREATE DATABASE ranger;
-CREATE USER ranger WITH PASSWORD 'cloudera';
-GRANT ALL PRIVILEGES ON DATABASE ranger TO ranger;
-CREATE DATABASE das;
-CREATE USER das WITH PASSWORD 'cloudera';
-GRANT ALL PRIVILEGES ON DATABASE das TO das;
-EOF
+#echo "-- Create DBs required by CM"
+#sudo -u postgres psql <<EOF 
+#CREATE DATABASE ranger;
+#CREATE USER ranger WITH PASSWORD 'cloudera';
+#GRANT ALL PRIVILEGES ON DATABASE ranger TO ranger;
+#CREATE DATABASE das;
+#CREATE USER das WITH PASSWORD 'cloudera';
+#GRANT ALL PRIVILEGES ON DATABASE das TO das;
+#EOF
 
 
 echo "-- Install CSDs"
@@ -203,31 +204,31 @@ mkdir ~/.ssh
 cat ~/myRSAkey.pub >> ~/.ssh/authorized_keys
 chmod 400 ~/.ssh/authorized_keys
 ssh-keyscan -H `hostname` >> ~/.ssh/known_hosts
-sed -i 's/.*PermitRootLogin.*/PermitRootLogin without-password/' /etc/ssh/sshd_config
-systemctl restart sshd
+#sed -i 's/.*PermitRootLogin.*/PermitRootLogin without-password/' /etc/ssh/sshd_config
+#systemctl restart sshd
 
 echo "-- Start CM, it takes about 2 minutes to be ready"
 systemctl start cloudera-scm-server
 
-while [ `curl -s -X GET -u "admin:admin"  http://localhost:7180/api/version` -z ] ;
-    do
-    echo "waiting 10s for CM to come up..";
-    sleep 10;
-done
+#while [ `curl -s -X GET -u "admin:admin"  http://localhost:7180/api/version` -z ] ;
+#    do
+#    echo "waiting 10s for CM to come up..";
+#    sleep 10;
+#done
 
 echo "-- Now CM is started and the next step is to automate using the CM API"
 
-pip install --upgrade pip cm_client
+#pip install --upgrade pip cm_client
 
-sed -i "s/YourHostname/`hostname -f`/g" $TEMPLATE
-sed -i "s/YourCDSWDomain/cdsw.$PUBLIC_IP.nip.io/g" $TEMPLATE
-sed -i "s/YourPrivateIP/`hostname -I | tr -d '[:space:]'`/g" $TEMPLATE
-sed -i "s#YourDockerDevice#$DOCKERDEVICE#g" $TEMPLATE
+#sed -i "s/YourHostname/`hostname -f`/g" $TEMPLATE
+#sed -i "s/YourCDSWDomain/cdsw.$PUBLIC_IP.nip.io/g" $TEMPLATE
+#sed -i "s/YourPrivateIP/`hostname -I | tr -d '[:space:]'`/g" $TEMPLATE
+#sed -i "s#YourDockerDevice#$DOCKERDEVICE#g" $TEMPLATE
 
-sed -i "s/YourHostname/`hostname -f`/g" scripts/create_cluster.py
+#sed -i "s/YourHostname/`hostname -f`/g" scripts/create_cluster.py
 
-python scripts/create_cluster.py $TEMPLATE
+#python scripts/create_cluster.py $TEMPLATE
 
 # configure and start EFM and Minifi
-service efm start
+#service efm start
 #service minifi start
